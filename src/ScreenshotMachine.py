@@ -3,6 +3,8 @@ import mss.tools
 import numpy as np
 import cv2
 import time
+import random
+from PIL import Image
 
 
 class ScreenshotMachine:
@@ -15,29 +17,28 @@ class ScreenshotMachine:
         # self.index = 0
 
         self.monitor = {}
+        self.image_size = {}
         # self.output = ""
+
+        self.key_index = 0
+        self.resize_scale = 6
 
         self.set_coordinates(self.x, self.y, self.width, self.height)
         pass
 
-    def take_screenshots(self, amount_of_screenshots_per_second):
-        while True:
-            time.sleep(1 / amount_of_screenshots_per_second)
-            # self.index += 1
-            with mss.mss() as sct:
-                # output = "screenshots/sct-{top}x{left}_{width}x{height}_{index}.png".format(**{"left": self.x, "top": self.y, "width": self. width, "height": self.height, "index": self.index})
+    def take_screenshot(self):
+        # self.index += 1
+        with mss.mss() as sct:
+            # output = "screenshots/sct-{top}x{left}_{width}x{height}_{index}.png".format(**{"left": self.x, "top": self.y, "width": self. width, "height": self.height, "index": self.index})
 
-                # Take screenshot from monitor area
-                sct_img = np.array(sct.grab(self.monitor))
+            # Take screenshot from monitor area
+            sct_img = np.array(sct.grab(self.monitor))
+            sct_img = cv2.resize(sct_img, dsize=(int(self.width / self.resize_scale), int(self.height / self.resize_scale)), interpolation=cv2.INTER_CUBIC)
+            # sct_img = cv2.Canny(sct_img, 100, 200)
 
-                cv2.imshow("OpenCV/Numpy grayscale", cv2.cvtColor(sct_img, cv2.COLOR_BGRA2GRAY))
-                if cv2.waitKey(25) & 0xFF == ord("q"):
-                    cv2.destroyAllWindows()
-                    break
-
-                # Save to the picture file
-                # mss.tools.to_png(sct_img.rgb, sct_img.size, output=output)
-        pass
+            # Save to the picture file
+            # mss.tools.to_png(sct_img.rgb, sct_img.size, output=output)
+        return sct_img
 
     def set_coordinates(self, x, y, width, height):
         self.x = x
@@ -45,4 +46,9 @@ class ScreenshotMachine:
         self.width = width
         self.height = height
         self.monitor = {"left": x, "top": y, "width": width, "height": height}
+        self.image_size = {"x": int(width / self.resize_scale), "y": int(height / self.resize_scale)}
+        pass
+
+    def get_image_size(self):
+        return self.image_size
         pass
