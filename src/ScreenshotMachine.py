@@ -8,11 +8,11 @@ from PIL import Image
 
 
 class ScreenshotMachine:
-    def __init__(self):
-        self.x = 0
-        self.y = 0
-        self.width = 0
-        self.height = 0
+    def __init__(self, x, y, width, height):
+        self.x = x
+        self.y = y
+        self.width = width
+        self.height = height
 
         # self.index = 0
 
@@ -21,9 +21,12 @@ class ScreenshotMachine:
         # self.output = ""
 
         self.key_index = 0
-        self.resize_scale = 6
+        self.resize_scale = 4
 
         self.set_coordinates(self.x, self.y, self.width, self.height)
+        self.image_width = int(self.width / self.resize_scale)
+        self.image_height = int(self.height / self.resize_scale)
+        self.image_size = self.image_width * self.image_height
         pass
 
     def take_screenshot(self):
