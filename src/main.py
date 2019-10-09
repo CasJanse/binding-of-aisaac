@@ -32,18 +32,10 @@ def main():
     time.sleep(1)
 
     # Screen positioning
-    temp_window_name = win32gui.GetWindowText(win32gui.GetForegroundWindow())
-    window = win32gui.GetForegroundWindow()
-    window_rect = win32gui.GetWindowRect(window)
-    win32gui.SetForegroundWindow(window)
+    window_rect = get_window_position()
 
     # Screenshot
-    x = window_rect[0]
-    y = window_rect[1]
-    width = window_rect[2]
-    height = window_rect[3]
-    screenshot_machine = ScreenshotMachine(x, int(y + ((height - y) * 0.226)), width - x, int((height - y) * 0.774))
-    # screenshot_machine.set_coordinates(68, 153, 662, 410)
+    screenshot_machine = create_screenshot_machine(window_rect)
 
     # Neural network
     # neural_network = NeuralNetwork(screenshot_machine.image_size, hidden_nodes_amount, output_nodes_amount, learning_rate,
@@ -52,6 +44,28 @@ def main():
                                    learning_rate,
                                    hidden_layers)
 
+    start_door_network(screenshot_machine, neural_network)
+    pass
+
+
+def get_window_position():
+    window = win32gui.GetForegroundWindow()
+    window_rect = win32gui.GetWindowRect(window)
+    win32gui.SetForegroundWindow(window)
+    return window_rect
+
+
+def create_screenshot_machine(window_rect):
+    x = window_rect[0]
+    y = window_rect[1]
+    width = window_rect[2]
+    height = window_rect[3]
+    screenshot_machine = ScreenshotMachine(x, int(y + ((height - y) * 0.226)), width - x, int((height - y) * 0.774))
+    # screenshot_machine.set_coordinates(68, 153, 662, 410)
+    return screenshot_machine
+
+
+def start_door_network(screenshot_machine, neural_network):
     key_index_array = [0]
 
     while True:
@@ -64,10 +78,14 @@ def main():
         sct_img = sct_img.flatten()
 
         # Train door network
-        top_door = get_img_values_in_square(sct_img, screenshot_machine.image_width, {"x": 71, "y": 4}, {"width": 17, "height": 9})
-        left_door = get_img_values_in_square(sct_img, screenshot_machine.image_width, {"x": 7, "y": 40}, {"width": 8, "height": 16})
-        right_door = get_img_values_in_square(sct_img, screenshot_machine.image_width, {"x": 144, "y": 40}, {"width": 8, "height": 16})
-        down_door = get_img_values_in_square(sct_img, screenshot_machine.image_width, {"x": 71, "y": 82}, {"width": 17, "height": 9})
+        top_door = get_img_values_in_square(sct_img, screenshot_machine.image_width, {"x": 71, "y": 4},
+                                            {"width": 17, "height": 9})
+        left_door = get_img_values_in_square(sct_img, screenshot_machine.image_width, {"x": 7, "y": 40},
+                                             {"width": 8, "height": 16})
+        right_door = get_img_values_in_square(sct_img, screenshot_machine.image_width, {"x": 144, "y": 40},
+                                              {"width": 8, "height": 16})
+        down_door = get_img_values_in_square(sct_img, screenshot_machine.image_width, {"x": 71, "y": 82},
+                                             {"width": 17, "height": 9})
 
         doors = np.array([left_door, right_door, down_door])
         inputs = np.array(top_door)
@@ -105,7 +123,6 @@ def main():
         if cv2.waitKey(25) & 0xFF == ord("q"):
             cv2.destroyAllWindows()
             break
-    pass
 
 
 def get_img_values_in_square(image, image_width, top_left, dimensions):
@@ -120,5 +137,3 @@ def get_img_values_in_square(image, image_width, top_left, dimensions):
 
 
 main()
-
-
