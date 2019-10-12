@@ -72,15 +72,18 @@ def create_screenshot_machine(window_rect):
 
 
 def train_door_recognition_network(network):
-    network.save_weights()
+    # Set training data
     door_data = [["Door Pixel Data"], ["Door Pixel Data"]]
     targets = [["Outputs"], ["Outputs"]]
+
+    # Train the network
     for i in range(len(door_data)):
         network.train(door_data[i], targets[i])
     network.save_weights()
 
 def start_door_network(screenshot_machine, neural_network_door_recognition, neural_network_door_movement):
     while True:
+        # Take screenshot
         time.sleep(1 / 20)
         sct_img = screenshot_machine.take_screenshot()
 
@@ -89,7 +92,7 @@ def start_door_network(screenshot_machine, neural_network_door_recognition, neur
         sct_img = cv2.cvtColor(sct_img, cv2.COLOR_BGRA2GRAY)
         sct_img = sct_img.flatten()
 
-        # Train door network
+        # Get door pixels from screenshot
         top_door = get_img_values_in_square(sct_img, screenshot_machine.image_width, {"x": 71, "y": 4},
                                             {"width": 17, "height": 9})
         left_door = get_img_values_in_square(sct_img, screenshot_machine.image_width, {"x": 7, "y": 40},
@@ -99,6 +102,7 @@ def start_door_network(screenshot_machine, neural_network_door_recognition, neur
         down_door = get_img_values_in_square(sct_img, screenshot_machine.image_width, {"x": 71, "y": 82},
                                              {"width": 17, "height": 9})
 
+        # Prepare data into flat array
         doors = np.array([left_door, right_door, down_door])
         inputs = np.array(top_door)
         for door in doors:
@@ -107,10 +111,7 @@ def start_door_network(screenshot_machine, neural_network_door_recognition, neur
         inputs = ((inputs / 255) * 0.99 + 0.01)
         output_door_recognition = neural_network_door_recognition.query(inputs)
 
-        print(output_door_recognition)
-
         output_door_movement = neural_network_door_movement.query(output_door_recognition)
-        print(output_door_movement)
 
         # press_keys(output_door_movement)
 
@@ -129,26 +130,32 @@ def start_door_network(screenshot_machine, neural_network_door_recognition, neur
         #         key_index_array.append(i)
         #         input_handler.press_key(key_codes[i])
 
+        # Stop loop when done
         if cv2.waitKey(25) & 0xFF == ord("q"):
             cv2.destroyAllWindows()
             break
 
 
-def press_keys(key_indeces):
+def press_keys(key_indices):
+    # Release all relevant keys
     for key_code in key_codes:
         input_handler.release_key(key_code)
 
     key_index_array = []
 
-    for i in range(len(key_indeces)):
-        if key_indeces[i] >= 0.5:
+    # Press keys
+    for i in range(len(key_indices)):
+        if key_indices[i] >= 0.5:
             key_index_array.append(i)
             input_handler.press_key(key_codes[i])
+    pass
 
 
 def get_img_values_in_square(image, image_width, top_left, dimensions):
     values = np.array([])
     start_point = image_width * top_left["y"] + top_left["x"]
+
+    # Get all pixels from the square by looping and getting each row
     for i in range(dimensions["height"]):
         temp_list = image[start_point + (image_width * i): start_point + (image_width * i) + dimensions["width"] + 1]
         for value in temp_list:
