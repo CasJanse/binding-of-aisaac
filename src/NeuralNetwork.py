@@ -3,7 +3,9 @@ import scipy.special
 
 
 class NeuralNetwork:
-    def __init__(self, inputNodes, hiddenNodes, outputNodes, learningRate, hiddenLayers):
+    def __init__(self, name, inputNodes, hiddenNodes, outputNodes, learningRate, hiddenLayers):
+        self.name = name
+
         # Set the number of nodes in each input, hidden, output layer
         self.inodes = inputNodes
         self.hnodes = hiddenNodes
@@ -87,14 +89,14 @@ class NeuralNetwork:
         for x in range(len(output_array) - 1):
             output_array[(x + 1)] = self.activation_function(np.dot(self.weights[x], output_array[x]))
 
-        return output_array[-1]
+        return output_array[-1].flatten()
 
     def save_weights(self):
-        np.savetxt('../csv/weights_who.csv', self.who, delimiter=',', fmt='%f')
-        np.savetxt('../csv/weights_wih.csv', self.wih, delimiter=',', fmt='%f')
+        for i in range(len(self.weights)):
+            np.savetxt('networks/weights_{}_{}.csv'.format(i, self.name), self.weights[i], delimiter=',', fmt='%f')
         pass
 
     def load_weights(self):
-        self.who = np.genfromtxt('../csv/weights_who.csv', delimiter=',')
-        self.wih = np.genfromtxt('../csv/weights_wih.csv', delimiter=',')
+        for i in range(len(self.weights)):
+            self.weights[i] = np.genfromtxt('networks/weights_{}_{}.csv'.format(i, self.name), delimiter=',')
         pass
