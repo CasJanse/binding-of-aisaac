@@ -29,10 +29,6 @@ hidden_layers = 1
 
 input_handler = InputHandler()
 
-# Isaac position
-isaac_x = 0
-isaac_y = 0
-
 
 def main():
     time.sleep(1)
@@ -98,13 +94,18 @@ def train_door_recognition_network(network):
 
 
 def start_door_network(screenshot_machine, neural_network_door_recognition, neural_network_door_movement):
+    isaac_x = 0
+    isaac_y = 0
     while True:
         # Take screenshot
         time.sleep(1 / 20)
         sct_img = screenshot_machine.take_screenshot()
 
         # Set the position of isaac gained from the screenshot
-        find_isaac(sct_img)
+        isaac_coords = find_isaac(sct_img)
+        if isaac_coords is not None:
+            isaac_x = isaac_coords[0]
+            isaac_y = isaac_coords[1]
 
         if show_windows:
             cv2.imshow("OpenCV/Numpy grayscale", cv2.cvtColor(sct_img, cv2.COLOR_BGRA2GRAY))
@@ -130,11 +131,10 @@ def start_door_network(screenshot_machine, neural_network_door_recognition, neur
                 inputs = np.append(inputs, value)
         inputs = ((inputs / 255) * 0.99 + 0.01)
         output_door_recognition = neural_network_door_recognition.query(inputs)
-        print(output_door_recognition)
+
         output_door_recognition = np.append(output_door_recognition, isaac_x)
         output_door_recognition = np.append(output_door_recognition, isaac_y)
-        print(output_door_recognition)
-
+        
         output_door_movement = neural_network_door_movement.query(output_door_recognition)
 
         # press_keys(output_door_movement)
@@ -199,16 +199,15 @@ def find_isaac(img):
         center_x = (left + right) / 2
         center_y = (top + bottom) / 2
 
-        global isaac_x
-        global isaac_y
-        isaac_x = center_x
-        isaac_y = center_y
-
         # print("Isaac center: {}, {}".format(center_x, center_y))
 
         if show_windows:
             cv2.imshow("OpenCV/Numpy HSV", hsv)
             cv2.imshow("OpenCV/Numpy Result", res_img)
+
+        return [center_x, center_y]
+    else:
+        return None
     pass
 
 
