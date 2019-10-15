@@ -127,6 +127,8 @@ open_doors = [top_open, left_open, right_open, bottom_open]
 closed_doors = [top_closed, left_closed, right_closed, bottom_closed]
 all_doors = [closed_doors, open_doors]
 
+door_positions = [{"x": 70, "y": 8}, {"x": 15, "y": 43}, {"x": 144, "y": 43}, {"x": 70, "y": 78}]
+
 
 def main():
     time.sleep(1)
@@ -256,6 +258,16 @@ def start_door_network(screenshot_machine, neural_network_door_recognition, neur
         inputs = ((inputs / 255) * 0.99 + 0.01)
         output_door_recognition = neural_network_door_recognition.query(inputs)
 
+        doors_open = []
+        for i in range(len(output_door_recognition)):
+            if output_door_recognition[i] > 0.8:
+                doors_open.append(1)
+            else:
+                doors_open.append(0)
+
+        closest_door = get_closest_point({"x": isaac_x, "y": isaac_y}, doors_open)
+        print(closest_door)
+
         output_door_recognition = np.append(output_door_recognition, isaac_x)
         output_door_recognition = np.append(output_door_recognition, isaac_y)
 
@@ -362,6 +374,25 @@ def get_img_values_in_square(image, image_width, top_left, dimensions):
         for value in temp_list:
             values = np.append(values, value)
     return values
+    pass
+
+
+def get_closest_point(isaac_pos, available_doors):
+    distances = []
+    for i in range(len(available_doors)):
+        if available_doors[i] == 1:
+            distances.append(np.sqrt((abs(isaac_pos["x"] - door_positions[i]["x"]) ** 2) + (abs(isaac_pos["y"] - door_positions[i]["y"]) ** 2)))
+        else:
+            distances.append(1000)
+
+    longest_distance = 1000
+    closest_door = 0
+    for i in range(len(distances)):
+        if distances[i] < longest_distance:
+            longest_distance = distances[i]
+            closest_door = i
+    print(distances)
+    return closest_door
     pass
 
 

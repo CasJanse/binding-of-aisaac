@@ -2,11 +2,7 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="aee218fd-b046-4334-93a0-b9ab2894154a" name="Default Changelist" comment="">
-      <change beforePath="$PROJECT_DIR$/src/NeuralNetwork.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/NeuralNetwork.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/ScreenshotMachine.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/ScreenshotMachine.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/main.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/main.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/networks/weights_0_door_recognition.csv" beforeDir="false" afterPath="$PROJECT_DIR$/src/networks/weights_0_door_recognition.csv" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/networks/weights_1_door_recognition.csv" beforeDir="false" afterPath="$PROJECT_DIR$/src/networks/weights_1_door_recognition.csv" afterDir="false" />
     </list>
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
     <option name="SHOW_DIALOG" value="false" />
@@ -19,8 +15,8 @@
       <file pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/src/main.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="406">
-              <caret line="261" column="37" selection-start-line="261" selection-start-column="37" selection-end-line="261" selection-end-column="37" />
+            <state relative-caret-position="373">
+              <caret line="129" column="47" lean-forward="true" selection-start-line="129" selection-start-column="47" selection-end-line="129" selection-end-column="47" />
               <folding>
                 <element signature="e#0#47#0" expanded="true" />
               </folding>
@@ -274,8 +270,8 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/src/main.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="406">
-          <caret line="261" column="37" selection-start-line="261" selection-start-column="37" selection-end-line="261" selection-end-column="37" />
+        <state relative-caret-position="373">
+          <caret line="129" column="47" lean-forward="true" selection-start-line="129" selection-start-column="47" selection-end-line="129" selection-end-column="47" />
           <folding>
             <element signature="e#0#47#0" expanded="true" />
           </folding>
