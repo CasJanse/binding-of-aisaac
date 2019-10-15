@@ -3,6 +3,7 @@ import cv2
 import time
 import win32gui
 import re
+import random
 import numpy as np
 from NeuralNetwork import NeuralNetwork
 from InputHandler import InputHandler
@@ -27,7 +28,104 @@ output_nodes_amount = 4
 learning_rate = 0.15
 hidden_layers = 1
 
+# Input Handler
 input_handler = InputHandler()
+
+# Door data
+top_open = np.array([88, 80, 75, 78, 75, 77, 80, 80, 81, 75, 75, 75, 77, 74, 74, 75, 80, 89,
+ 65, 58, 56, 47, 47, 47, 47, 47, 47, 47, 47, 47, 47, 47, 46, 58, 58, 70,
+ 77, 76, 59, 47, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 49, 56, 66, 84,
+ 64, 72, 62, 52, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 51, 74, 66, 60,
+ 80, 82, 78, 54, 48, 48, 48, 48, 48, 48, 48, 48, 48, 47, 57, 71, 79, 78,
+ 78, 78, 81, 59, 47, 48, 47, 47, 48, 47, 47, 47, 48, 49, 70, 75, 78, 78,
+ 79, 78, 75, 66, 51, 52, 51, 57, 52, 51, 56, 51, 51, 55, 74, 74, 77, 77,
+ 71, 71, 71, 75, 57, 58, 58, 58, 59, 58, 58, 58, 58, 64, 64, 68, 68, 67,
+ 59, 59, 58, 57, 61, 61, 62, 62, 62, 61, 61, 61, 61, 62, 59, 59, 59, 59])
+
+top_closed = np.array([ 89,  89,  88,  89,  89, 112,  65,  74,  84,  89,  89,  89,  89,  89,
+  89,  89,  89,  89,  90,  82,  88,  89,  89,  72,  69,  71,  76,  89,
+  89,  85,  86,  89,  90,  90,  90,  88,  75,  78,  78,  78,  75,  73,
+  67,  67,  73,  77,  78,  78,  78,  72,  72,  72,  78,  83,  62,  63,
+  63,  63,  63,  64,  66,  67,  64,  63,  63,  63,  63,  62,  63,  66,
+  66,  59,  77,  79,  77,  78,  80,  80,  81,  79,  73,  81,  81,  81,
+  79,  76,  77,  77,  76,  75,  76,  76,  76,  76,  76,  76,  76,  74,
+  73,  76,  76,  80,  76,  73,  76,  76,  75,  75,  76,  76,  77,  81,
+  70,  75,  92,  83,  73,  77,  76,  68,  70,  73,  70,  72,  73,  73,
+  69,  69,  69,  69,  64,  75, 196, 195,  79,  83,  72,  64,  64,  66,
+  67,  66,  66,  65,  59,  59,  58,  58,  58,  54, 200,  53,  56,  70,
+  59,  59,  59,  58,  58,  58,  58,  58])
+
+left_open = np.array([76, 58, 83, 64, 78, 79, 75, 72, 63, 76, 55, 57, 61, 79, 80, 80, 67, 62,
+ 76, 47, 47, 53, 51, 63, 73, 75, 61, 76, 47, 48, 48, 48, 47, 51, 58, 65,
+ 75, 47, 48, 48, 48, 48, 51, 58, 65, 75, 47, 48, 48, 48, 48, 55, 58, 65,
+ 76, 47, 48, 48, 48, 48, 55, 58, 56, 76, 47, 48, 48, 48, 48, 51, 55, 65,
+ 81, 47, 48, 48, 48, 48, 53, 58, 64, 79, 47, 48, 48, 48, 48, 55, 58, 64,
+ 80, 47, 48, 48, 48, 48, 55, 58, 66, 62, 47, 48, 48, 48, 48, 51, 58, 66,
+ 81, 47, 48, 47, 50, 52, 59, 62, 66, 75, 49, 52, 56, 58, 67, 73, 66, 62,
+ 76, 58, 55, 79, 83, 80, 84, 66, 63, 80, 58, 61, 67, 76, 79, 79, 67, 66])
+
+left_closed = np.array([99, 93, 79, 67, 78, 79, 75, 72, 63, 93, 93, 74, 74, 77, 79, 79, 67, 62,
+ 93, 88, 89, 70, 79, 79, 76, 66, 62, 93, 93, 89, 70, 81, 79, 68, 66, 65,
+ 93, 93, 89, 70, 80, 79, 76, 65, 62, 93, 92, 90, 70, 79, 79, 76, 60, 62,
+ 93, 89, 94, 72, 69, 68, 61, 60, 63, 93, 86, 89, 71, 60, 60, 66, 59, 62,
+ 93, 84, 90, 70, 65, 62, 65, 62, 62, 93, 90, 94, 71, 65, 66, 60, 60, 63,
+ 93, 91, 90, 70, 79, 79, 73, 60, 66, 93, 93, 89, 70, 80, 79, 77, 65, 65,
+ 93, 93, 89, 70, 81, 79, 68, 66, 62, 93, 89, 89, 70, 80, 79, 75, 66, 62,
+ 96, 89, 86, 72, 75, 79, 83, 66, 63, 93, 93, 79, 72, 76, 79, 79, 67, 66])
+
+right_open = np.array([73, 62, 75, 77, 74, 85, 77, 58, 73, 73, 61, 72, 79, 68, 58, 57, 52, 73,
+ 62, 63, 57, 57, 53, 51, 48, 48, 73, 63, 58, 54, 48, 48, 48, 48, 48, 64,
+ 61, 58, 59, 51, 48, 48, 48, 48, 80, 61, 57, 59, 50, 48, 48, 48, 48, 79,
+ 64, 57, 59, 50, 48, 48, 48, 48, 79, 61, 53, 51, 48, 48, 48, 48, 48, 73,
+ 62, 57, 59, 50, 48, 48, 48, 48, 73, 60, 57, 59, 50, 48, 48, 48, 48, 73,
+ 60, 57, 59, 51, 48, 48, 48, 48, 75, 61, 57, 53, 48, 48, 48, 48, 48, 65,
+ 71, 66, 67, 56, 53, 51, 48, 48, 74, 73, 62, 70, 82, 80, 57, 56, 53, 73,
+ 71, 63, 77, 77, 75, 76, 81, 57, 73, 66, 64, 77, 76, 77, 58, 75, 72, 79])
+
+right_closed = np.array([ 71,  62,  78,  70,  81,  59,  75,  95,  86,  72,  62,  71,  71,  80,
+  60,  76,  91,  93,  73,  63,  64,  78,  79,  60,  77,  87,  93,  74,
+  61,  66,  79,  80,  59,  78,  93,  93,  74,  60,  66,  79,  82,  59,
+  79,  90,  93,  70,  60,  66,  80,  82,  59,  80,  98,  93,  68,  60,
+  60,  68,  85,  59,  81,  99,  93,  66,  60,  67,  62,  60,  60,  75,
+  84,  93,  64,  60,  60,  66,  66,  61,  67,  74,  76,  64,  60,  65,
+  63,  64,  59,  81, 101,  74,  66,  60,  65,  78,  82,  59,  81, 102,
+  93,  69,  60,  66,  80,  82,  59,  79,  90,  93,  69,  62,  66,  79,
+  81,  59,  78,  90,  93,  71,  63,  77,  79,  81,  59,  78,  88,  93,
+  70,  64,  79,  79,  79,  59,  77,  85,  93,  65,  64,  80,  78,  79,
+  59,  77,  94,  93])
+
+bottom_open = np.array([64, 64, 64, 62, 75, 74, 74, 68, 67, 74, 74, 74, 74, 73, 59, 64, 64, 64,
+ 65, 65, 66, 63, 64, 58, 58, 58, 58, 58, 58, 58, 58, 57, 74, 65, 65, 65,
+ 75, 75, 75, 72, 55, 51, 51, 51, 51, 52, 51, 51, 52, 51, 66, 75, 75, 75,
+ 76, 75, 70, 75, 49, 48, 48, 48, 48, 48, 48, 48, 48, 47, 59, 82, 75, 75,
+ 75, 75, 71, 56, 47, 48, 48, 48, 48, 48, 48, 48, 48, 48, 54, 77, 76, 75,
+ 58, 56, 82, 54, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 53, 63, 72, 58,
+ 72, 67, 55, 49, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 47, 59, 82, 74,
+ 66, 57, 58, 49, 51, 51, 50, 50, 50, 50, 50, 50, 51, 51, 50, 55, 57, 55,
+ 87, 82, 84, 75, 80, 77, 87, 81, 82, 81, 81, 85, 81, 76, 79, 82, 84, 87])
+
+bottom_closed = np.array([64, 64, 64, 64, 64, 64, 64, 64, 63, 64, 64, 64, 64, 64, 64, 64, 64, 64,
+ 67, 67, 67, 67, 66, 68, 68, 68, 67, 67, 68, 66, 66, 67, 66, 66, 66, 67,
+ 78, 78, 78, 79, 75, 69, 79, 80, 78, 78, 77, 69, 68, 69, 77, 77, 78, 72,
+ 79, 78, 78, 78, 78, 78, 78, 78, 78, 78, 78, 85, 78, 78, 78, 78, 78, 78,
+ 78, 78, 78, 78, 78, 78, 79, 79, 78, 78, 78, 78, 79, 79, 78, 78, 78, 78,
+ 59, 59, 58, 58, 57, 58, 59, 60, 60, 59, 58, 59, 59, 58, 59, 60, 60, 59,
+ 75, 76, 76, 76, 75, 75, 66, 65, 75, 75, 76, 77, 76, 75, 75, 75, 76, 76,
+ 85, 82, 94, 93, 88, 74, 66, 70, 75, 86, 94, 93, 80, 89, 87, 84, 82, 93,
+ 93, 93, 93, 93, 93, 84, 67, 71, 82, 93, 93, 93, 93, 93, 93, 93, 93, 93])
+
+top_open = top_open / 255 + 0.01
+left_open = left_open / 255 + 0.01
+right_open = right_open / 255 + 0.01
+bottom_open = bottom_open / 255 + 0.01
+top_closed = top_closed / 255 + 0.01
+left_closed = left_closed / 255 + 0.01
+right_closed = right_closed / 255 + 0.01
+bottom_closed = bottom_closed / 255 + 0.01
+
+open_doors = [top_open, left_open, right_open, bottom_open]
+closed_doors = [top_closed, left_closed, right_closed, bottom_closed]
+all_doors = [closed_doors, open_doors]
 
 
 def main():
@@ -84,18 +182,42 @@ def create_screenshot_machine(window_rect):
 
 def train_door_recognition_network(network):
     # Set training data
-    door_data = [["Door Pixel Data"], ["Door Pixel Data"]]
-    targets = [["Outputs"], ["Outputs"]]
+    door_data = []
+    targets = []
+    print('tets')
+    network.load_weights()
+    # for i in range(1000):
+    #     current_doors = np.array([])
+    #     choices = np.random.randint(2, size=4)
+    #     current_doors = np.append(current_doors, all_doors[choices[0]][0])
+    #     current_doors = np.append(current_doors, all_doors[choices[1]][1])
+    #     current_doors = np.append(current_doors, all_doors[choices[2]][2])
+    #     current_doors = np.append(current_doors, all_doors[choices[3]][3])
+    #     door_data.append(current_doors)
+    #     targets.append(choices)
+    #
+    # # Train the network
+    # for i in range(len(door_data)):
+    #     network.train(door_data[i], targets[i])
 
-    # Train the network
-    for i in range(len(door_data)):
-        network.train(door_data[i], targets[i])
-    network.save_weights()
+    test_data = np.array([])
+    test_data = np.append(test_data, top_open)
+    test_data = np.append(test_data, left_open)
+    test_data = np.append(test_data, right_closed)
+    test_data = np.append(test_data, bottom_closed)
+
+    test = network.query(test_data)
+    print(test)
+    save = input("save weights?")
+    if save.lower()[0] == "y":
+        network.save_weights()
 
 
 def start_door_network(screenshot_machine, neural_network_door_recognition, neural_network_door_movement):
     isaac_x = 0
     isaac_y = 0
+    neural_network_door_recognition.load_weights()
+
     while True:
         # Take screenshot
         time.sleep(1 / 20)
@@ -123,6 +245,8 @@ def start_door_network(screenshot_machine, neural_network_door_recognition, neur
         down_door = get_img_values_in_square(sct_img, screenshot_machine.image_width, {"x": 71, "y": 82},
                                              {"width": 17, "height": 9})
 
+        cv2.imshow("bottomdoor", down_door)
+
         # Prepare data into flat array
         doors = np.array([left_door, right_door, down_door])
         inputs = np.array(top_door)
@@ -134,7 +258,9 @@ def start_door_network(screenshot_machine, neural_network_door_recognition, neur
 
         output_door_recognition = np.append(output_door_recognition, isaac_x)
         output_door_recognition = np.append(output_door_recognition, isaac_y)
-        
+
+        print(output_door_recognition)
+
         output_door_movement = neural_network_door_movement.query(output_door_recognition)
 
         # press_keys(output_door_movement)

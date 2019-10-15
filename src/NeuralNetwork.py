@@ -67,7 +67,6 @@ class NeuralNetwork:
         # hidden_errors = np.dot(self.who.T, output_errors)
 
         # Update all weights based on their errors
-        print(len(self.weights))
         for x in range(len(self.weights)):
             self.weights[-(x + 1)] += self.lr * np.dot((error_array[-(x + 1)] * output_array[-(x + 1)] * (1.0 - output_array[-(x + 1)])), np.transpose(output_array[-(x + 2)]))
 
