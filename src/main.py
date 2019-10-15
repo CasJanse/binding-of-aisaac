@@ -127,7 +127,7 @@ open_doors = [top_open, left_open, right_open, bottom_open]
 closed_doors = [top_closed, left_closed, right_closed, bottom_closed]
 all_doors = [closed_doors, open_doors]
 
-door_positions = [{"x": 70, "y": 8}, {"x": 15, "y": 43}, {"x": 144, "y": 43}, {"x": 70, "y": 78}]
+door_positions = [{"x": 80, "y": 0}, {"x": 0, "y": 43}, {"x": 160, "y": 43}, {"x": 80, "y": 90}]
 
 
 def main():
@@ -148,9 +148,10 @@ def main():
 
     neural_network_door_recognition = NeuralNetwork("door_recognition", 612, 100, 4, 0.15, 1)
 
-    neural_network_door_movement = NeuralNetwork("door_movement", 6, 10, 4, 0.2, 1)
+    neural_network_door_movement = NeuralNetwork("door_movement", 6, 10, 4, 0.15, 1)
 
     # train_door_recognition_network(neural_network_door_recognition)
+    # train_door_movement_network(neural_network_door_movement)
 
     if show_windows:
         cv2.namedWindow("Tracking")
@@ -215,10 +216,53 @@ def train_door_recognition_network(network):
         network.save_weights()
 
 
+def train_door_movement_network(network):
+    # Set training data
+    door_data = []
+    targets = []
+
+    for i in range(10000):
+        correct_door = np.zeros(4)
+        correct_door[np.random.randint(0, 4)] = 1
+        isaac_x = np.random.randint(0, 160)
+        isaac_y = np.random.randint(0, 80)
+        isaac_x_input = isaac_x / 100
+        isaac_y_input = isaac_y / 100
+        correct_door = np.append(correct_door, isaac_x_input)
+        correct_door = np.append(correct_door, isaac_y_input)
+        print(correct_door)
+        door_data.append(correct_door)
+
+        door_index = 0
+        for j in range(len(correct_door) - 2):
+            if correct_door[j] == 1:
+                door_index = j
+
+        target = []
+        target.append(1 if isaac_y > door_positions[door_index]["y"] else 0)
+        target.append(1 if isaac_x > door_positions[door_index]["x"] else 0)
+        target.append(1 if isaac_y < door_positions[door_index]["y"] else 0)
+        target.append(1 if isaac_x < door_positions[door_index]["x"] else 0)
+        targets.append(target)
+        print(target)
+
+    for i in range(len(door_data)):
+        network.train(door_data[i], targets[i])
+
+    test = network.query([0, 0, 1, 0, 0.7, 0.1])
+    print(test)
+
+    save = input("save weights?")
+    if save.lower()[0] == "y":
+        network.save_weights()
+    pass
+
+
 def start_door_network(screenshot_machine, neural_network_door_recognition, neural_network_door_movement):
     isaac_x = 0
     isaac_y = 0
     neural_network_door_recognition.load_weights()
+    neural_network_door_movement.load_weights()
 
     while True:
         # Take screenshot
@@ -247,8 +291,6 @@ def start_door_network(screenshot_machine, neural_network_door_recognition, neur
         down_door = get_img_values_in_square(sct_img, screenshot_machine.image_width, {"x": 71, "y": 82},
                                              {"width": 17, "height": 9})
 
-        cv2.imshow("bottomdoor", down_door)
-
         # Prepare data into flat array
         doors = np.array([left_door, right_door, down_door])
         inputs = np.array(top_door)
@@ -266,16 +308,18 @@ def start_door_network(screenshot_machine, neural_network_door_recognition, neur
                 doors_open.append(0)
 
         closest_door = get_closest_point({"x": isaac_x, "y": isaac_y}, doors_open)
-        print(closest_door)
 
-        output_door_recognition = np.append(output_door_recognition, isaac_x)
-        output_door_recognition = np.append(output_door_recognition, isaac_y)
+        input_door_recognition = np.zeros(4)
+        input_door_recognition[closest_door] = 1
 
-        print(output_door_recognition)
+        input_door_recognition = np.append(input_door_recognition, isaac_x / 100)
+        input_door_recognition = np.append(input_door_recognition, isaac_y / 100)
 
-        output_door_movement = neural_network_door_movement.query(output_door_recognition)
+        output_door_movement = neural_network_door_movement.query(input_door_recognition)
+        print(input_door_recognition)
+        print(output_door_movement)
 
-        # press_keys(output_door_movement)
+        press_keys(output_door_movement)
 
         # # Prepare inputs by normalizing them
         # inputs = sct_img
@@ -391,7 +435,6 @@ def get_closest_point(isaac_pos, available_doors):
         if distances[i] < longest_distance:
             longest_distance = distances[i]
             closest_door = i
-    print(distances)
     return closest_door
     pass
 
