@@ -7,6 +7,8 @@ import numpy as np
 from NeuralNetwork import NeuralNetwork
 from InputHandler import InputHandler
 
+show_windows = True
+
 # Key codes
 W = 0x11
 A = 0x1E
@@ -27,6 +29,10 @@ hidden_layers = 1
 
 input_handler = InputHandler()
 
+# Isaac position
+isaac_x = 0
+isaac_y = 0
+
 
 def main():
     time.sleep(1)
@@ -46,11 +52,20 @@ def main():
 
     neural_network_door_recognition = NeuralNetwork("door_recognition", 612, 100, 4, 0.15, 1)
 
-    neural_network_door_movement = NeuralNetwork("door_movement", 4, 10, 4, 0.2, 1)
+    neural_network_door_movement = NeuralNetwork("door_movement", 6, 10, 4, 0.2, 1)
 
-    train_door_recognition_network(neural_network_door_recognition)
+    # train_door_recognition_network(neural_network_door_recognition)
 
-    # start_door_network(screenshot_machine, neural_network_door_recognition, neural_network_door_movement)
+    if show_windows:
+        cv2.namedWindow("Tracking")
+        cv2.createTrackbar("LH", "Tracking", 0, 255, nothing)
+        cv2.createTrackbar("LS", "Tracking", 0, 255, nothing)
+        cv2.createTrackbar("LV", "Tracking", 0, 255, nothing)
+        cv2.createTrackbar("UH", "Tracking", 255, 255, nothing)
+        cv2.createTrackbar("US", "Tracking", 255, 255, nothing)
+        cv2.createTrackbar("UV", "Tracking", 255, 255, nothing)
+
+    start_door_network(screenshot_machine, neural_network_door_recognition, neural_network_door_movement)
     pass
 
 
@@ -81,13 +96,18 @@ def train_door_recognition_network(network):
         network.train(door_data[i], targets[i])
     network.save_weights()
 
+
 def start_door_network(screenshot_machine, neural_network_door_recognition, neural_network_door_movement):
     while True:
         # Take screenshot
         time.sleep(1 / 20)
         sct_img = screenshot_machine.take_screenshot()
 
-        cv2.imshow("OpenCV/Numpy grayscale", cv2.cvtColor(sct_img, cv2.COLOR_BGRA2GRAY))
+        # Set the position of isaac gained from the screenshot
+        find_isaac(sct_img)
+
+        if show_windows:
+            cv2.imshow("OpenCV/Numpy grayscale", cv2.cvtColor(sct_img, cv2.COLOR_BGRA2GRAY))
 
         sct_img = cv2.cvtColor(sct_img, cv2.COLOR_BGRA2GRAY)
         sct_img = sct_img.flatten()
@@ -110,6 +130,10 @@ def start_door_network(screenshot_machine, neural_network_door_recognition, neur
                 inputs = np.append(inputs, value)
         inputs = ((inputs / 255) * 0.99 + 0.01)
         output_door_recognition = neural_network_door_recognition.query(inputs)
+        print(output_door_recognition)
+        output_door_recognition = np.append(output_door_recognition, isaac_x)
+        output_door_recognition = np.append(output_door_recognition, isaac_y)
+        print(output_door_recognition)
 
         output_door_movement = neural_network_door_movement.query(output_door_recognition)
 
@@ -134,6 +158,58 @@ def start_door_network(screenshot_machine, neural_network_door_recognition, neur
         if cv2.waitKey(25) & 0xFF == ord("q"):
             cv2.destroyAllWindows()
             break
+
+
+def find_isaac(img):
+    hsv = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
+
+    # # Set upper and lower bound of Hue, Saturation and Value using the tracking window
+    # l_h = cv2.getTrackbarPos("LH", "Tracking")
+    # l_s = cv2.getTrackbarPos("LS", "Tracking")
+    # l_v = cv2.getTrackbarPos("LV", "Tracking")
+    # u_h = cv2.getTrackbarPos("UH", "Tracking")
+    # u_s = cv2.getTrackbarPos("US", "Tracking")
+    # u_v = cv2.getTrackbarPos("UV", "Tracking")
+    # l_c = np.array([l_h, l_s, l_v])
+    # u_c = np.array([u_h, u_s, u_v])
+
+    l_c = np.array([0, 63, 167])
+    u_c = np.array([0, 65, 208])
+
+    # Create a mask using the upper and lower color values
+    mask = cv2.inRange(hsv, l_c, u_c)
+
+    # Put the mask over the original image to show only isaac
+    res_img = cv2.bitwise_and(img, img, mask=mask)
+
+    # Convert image to so everything expect isaac becomes white
+    res_img = cv2.cvtColor(res_img, cv2.COLOR_BGR2GRAY)
+    # res_img = 255-res_img
+
+    # Find isaac in image by checking non-zero pixels
+    isaac_img = cv2.findNonZero(res_img)
+    if isaac_img is not None:
+        # Find top, bottom, left and right edges of isaac
+        left = isaac_img[:, 0, 0].min()
+        right = isaac_img[:, 0, 0].max()
+        top = isaac_img[:, 0, 1].min()
+        bottom = isaac_img[:, 0, 1].max()
+
+        # Find center of isaac by averaging edges
+        center_x = (left + right) / 2
+        center_y = (top + bottom) / 2
+
+        global isaac_x
+        global isaac_y
+        isaac_x = center_x
+        isaac_y = center_y
+
+        # print("Isaac center: {}, {}".format(center_x, center_y))
+
+        if show_windows:
+            cv2.imshow("OpenCV/Numpy HSV", hsv)
+            cv2.imshow("OpenCV/Numpy Result", res_img)
+    pass
 
 
 def press_keys(key_indices):
@@ -161,6 +237,11 @@ def get_img_values_in_square(image, image_width, top_left, dimensions):
         for value in temp_list:
             values = np.append(values, value)
     return values
+    pass
+
+
+# Dummy callback for tracking window
+def nothing(x):
     pass
 
 

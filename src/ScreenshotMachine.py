@@ -21,7 +21,7 @@ class ScreenshotMachine:
         # self.output = ""
 
         self.key_index = 0
-        self.resize_scale = 4
+        self.resize_scale = 1
 
         self.set_coordinates(self.x, self.y, self.width, self.height)
         self.image_width = int(self.width / self.resize_scale)
